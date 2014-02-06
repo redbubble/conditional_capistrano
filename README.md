@@ -1,6 +1,7 @@
 # ConditionalCapistrano
 
-Only execute a capistrano task when certain path's have changed since the last deploy.
+Conditionally schedule and execute capistrano tasks based on changes to
+specified paths.
 
 ## Installation
 
@@ -18,17 +19,16 @@ Or install it yourself as:
 
 ## Usage
 
-Simply require the capistrano module in your config/deploy.rb file:
+Simply require the capistrano module in your `config/deploy.rb` file:
 
     require 'conditional_capistrano/capistrano'
 
-Then add some options to the tasks you want to only execute when the specified
-path's have changed since the last deploy:
+Then add some options to the task scheduling:
 
     after "key_vault:symlink", "key_vault:check", when_changed: "config/key_vault.yml"
     after "deploy:symlink_configs", "assets:compile", when_changed: %w[app/assets Gemfile Gemfile.lock config/application.rb]
 
-You can either mention single files or whole folders, which will check for any
+You can either mention single files or whole folders, which will be checked for any
 changes within.
 
 ## Contributing

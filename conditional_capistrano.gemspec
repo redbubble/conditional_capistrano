@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
   spec.version       = ConditionalCapistrano::VERSION
   spec.authors       = ["redbubble"]
   spec.email         = ["developers@redbubble.com"]
-  spec.description   = %q{Conditionally trigger capistrano tasks on path change}
+  spec.description   = %q{Conditionally schedule and execute capistrano tasks based on changes to specified paths}
   spec.summary       = %q{Execute capistrano task's only when certain path's have changed since the last deploy}
   spec.homepage      = ""
   spec.license       = "MIT"
