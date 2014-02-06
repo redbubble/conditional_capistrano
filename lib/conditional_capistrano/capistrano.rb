@@ -1,49 +1,38 @@
+require 'conditional_capistrano/capistrano/task_definition'
+
 module ConditionalCapistrano
   module Capistrano
     def self.included(base)
       base.class_eval do
         include InstanceMethods
 
-        alias_method :applies_to_without_file_check?, :applies_to?
-        alias_method :applies_to?, :applies_to_with_file_check?
+        alias_method :execute_task_without_paths_check, :execute_task
+        alias_method :execute_task, :execute_task_with_paths_check
       end
     end
 
     module InstanceMethods
-      def applies_to_with_file_check?(task)
-        return false if check_for_changes? && !trigger?(*paths_to_check)
+      def execute_task_with_paths_check(task)
+        return if task.check_for_path_changes? && !trigger?(task)
 
-        applies_to_without_file_check?(task)
+        execute_task_without_paths_check task
       end
 
-    private
-
-      def check_for_changes?
-        options.has_key?(:when_changed)
-      end
-
-      def paths_to_check
-        Array(options[:when_changed])
-      end
-
-      def trigger?(*paths)
-        paths.find { |path| changed_files.find { |p| p[0, path.length] == path } }
+      def trigger?(task)
+        task.paths_to_check.find { |path| changed_files.find { |p| p[0, path.length] == path } }
       rescue IndexError
         false
       end
 
-      def changed_files
-        @changed_files ||=
-          config.capture(
-            "cd #{fetch(:repository_cache)} && git diff --name-only #{fetch(:current_git_tag)} HEAD | cat"
-          ).strip.split
-      end
+    private
 
-      def fetch(key)
-        config.fetch key
+      def changed_files
+        capture(
+          "cd #{repository_cache} && git diff --name-only #{current_git_tag} HEAD | cat"
+        ).strip.split
       end
     end
   end
 end
 
-Capistrano::Callback.send :include, ConditionalCapistrano::Capistrano
+Capistrano::Configuration.send :include, ConditionalCapistrano::Capistrano

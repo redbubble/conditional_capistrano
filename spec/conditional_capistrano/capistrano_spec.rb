@@ -1,53 +1,80 @@
 module Capistrano; end
-class Capistrano::Callback
-  attr_reader :options
-
-  def initialize(options)
-    @options = options
+module Capistrano
+  class Configuration
+    def execute_task(task)
+      "original"
+    end
   end
+end
 
-  def applies_to?(task)
-    "original"
+module Capistrano
+  class TaskDefinition
   end
 end
 
 require 'conditional_capistrano/capistrano'
 
-describe Capistrano::Callback do
+describe Capistrano::Configuration do
 
-  describe "#applies_to_with_file_check?" do
-    it "falls back to the original 'applies_to?' if no 'when_changed' options were found" do
-      Capistrano::Callback.new({}).applies_to?("test").should == "original"
+  describe "#applies_to_with_paths_check?" do
+    let(:task) { Capistrano::TaskDefinition.new }
+
+    it "falls back to the original if this task doesn't require a path check" do
+      task.stub :check_for_path_changes? => false
+      subject.execute_task(task).should == "original"
     end
 
-    it "returns false if files have been specified, but haven't changed" do
-      callback = Capistrano::Callback.new(when_changed: "file")
-      callback.stub :trigger? => false
-
-      callback.applies_to?("test").should_not be
-    end
-
-    it "falls back to the original if files have been specified, and have changed" do
-      callback = Capistrano::Callback.new(when_changed: "file")
-      callback.stub :trigger? => true
-
-      callback.applies_to?("test").should == "original"
-    end
-
-    context "possible file options" do
-      it "allows a single file" do
-        callback = Capistrano::Callback.new(when_changed: "file")
-
-        callback.should_receive(:trigger?).with "file"
-        callback.applies_to? "test"
+    context "when path check is required" do
+      before do
+        task.stub :check_for_path_changes? => true
       end
 
-      it "allows an array of files" do
-        callback = Capistrano::Callback.new(when_changed: %w[file1 file2])
-
-        callback.should_receive(:trigger?).with "file1", "file2"
-        callback.applies_to? "test"
+      it "returns false if files have been specified, but haven't changed" do
+        subject.stub :trigger? => false
+        subject.execute_task(task).should_not be
       end
+
+      it "falls back to the original if files have been specified, and have changed" do
+        subject.stub :trigger? => true
+        subject.execute_task(task).should == "original"
+      end
+    end
+  end
+
+  describe "#trigger?" do
+    let(:task) { Capistrano::TaskDefinition.new }
+
+    it "returns false if the task doesn't have any paths to check" do
+      task.stub paths_to_check: []
+      subject.trigger?(task).should_not be
+    end
+
+    it "returns false if no files have changed" do
+      task.stub paths_to_check: %w[path/to/file]
+      subject.stub changed_files: []
+
+      subject.trigger?(task).should_not be
+    end
+
+    it "returns true if we have matching files" do
+      task.stub paths_to_check: %w[path/to/file]
+      subject.stub changed_files: %w[path/to/file]
+
+      subject.trigger?(task).should be
+    end
+
+    it "returns false if we files that don't match" do
+      task.stub paths_to_check: %w[path/to/file1]
+      subject.stub changed_files: %w[path/to/file2]
+
+      subject.trigger?(task).should_not be
+    end
+
+    it "returns true if we have files that match a path" do
+      task.stub paths_to_check: %w[path/to]
+      subject.stub changed_files: %w[path/to/file]
+
+      subject.trigger?(task).should be
     end
   end
 end

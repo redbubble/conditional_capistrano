@@ -23,10 +23,15 @@ Simply require the capistrano module in your `config/deploy.rb` file:
 
     require 'conditional_capistrano/capistrano'
 
-Then add some options to the task scheduling:
+Then add some options to the tasks:
 
-    after "key_vault:symlink", "key_vault:check", when_changed: "config/key_vault.yml"
-    after "deploy:symlink_configs", "assets:compile", when_changed: %w[app/assets Gemfile Gemfile.lock config/application.rb]
+    task :compile, roles: :assets, when_changed: %w[app/assets Gemfile Gemfile.lock config/application.rb] do
+      ...
+    end
+
+    task :check, roles: :app, when_changed: "config/key_vault.yml" do
+      ...
+    end
 
 You can either mention single files or whole folders, which will be checked for any
 changes within.
