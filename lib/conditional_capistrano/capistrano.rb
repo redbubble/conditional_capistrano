@@ -19,14 +19,23 @@ module ConditionalCapistrano
       end
 
       def trigger?(task)
-        task.paths_to_check.find { |path| changed_files.find { |p| p[0, path.length] == path } }
+        return false if task.paths_to_check.empty?
+
+        changed_files_cache = changed_files_in_git
+        task.paths_to_check.any? do |path|
+          changed_files_cache.any? { |file| starts_with_path?(path, file) }
+        end
       rescue IndexError
         false
       end
 
     private
 
-      def changed_files
+      def starts_with_path?(path, file)
+        file[0, path.length] == path
+      end
+
+      def changed_files_in_git
         capture(
           "cd #{repository_cache} && git diff --name-only #{current_git_tag} HEAD | cat"
         ).strip.split

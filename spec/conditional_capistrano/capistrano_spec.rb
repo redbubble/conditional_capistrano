@@ -51,30 +51,37 @@ describe Capistrano::Configuration do
 
     it "returns false if no files have changed" do
       task.stub paths_to_check: %w[path/to/file]
-      subject.stub changed_files: []
+      subject.stub changed_files_in_git: []
 
       subject.trigger?(task).should_not be
     end
 
     it "returns true if we have matching files" do
       task.stub paths_to_check: %w[path/to/file]
-      subject.stub changed_files: %w[path/to/file]
+      subject.stub changed_files_in_git: %w[path/to/file]
 
       subject.trigger?(task).should be
     end
 
     it "returns false if we files that don't match" do
       task.stub paths_to_check: %w[path/to/file1]
-      subject.stub changed_files: %w[path/to/file2]
+      subject.stub changed_files_in_git: %w[path/to/file2]
 
       subject.trigger?(task).should_not be
     end
 
     it "returns true if we have files that match a path" do
       task.stub paths_to_check: %w[path/to]
-      subject.stub changed_files: %w[path/to/file]
+      subject.stub changed_files_in_git: %w[path/to/file]
 
       subject.trigger?(task).should be
+    end
+
+    it "returns false if we have files that match a path with a dot" do
+      task.stub paths_to_check: %w[path/to.test]
+      subject.stub changed_files_in_git: %w[path/to-test/file]
+
+      subject.trigger?(task).should_not be
     end
   end
 end
