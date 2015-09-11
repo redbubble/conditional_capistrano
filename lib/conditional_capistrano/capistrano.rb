@@ -27,6 +27,8 @@ module ConditionalCapistrano
         end
       rescue IndexError
         false
+      rescue NameError
+        true
       end
 
     private

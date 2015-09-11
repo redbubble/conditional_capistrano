@@ -83,5 +83,12 @@ describe Capistrano::Configuration do
 
       subject.trigger?(task).should_not be
     end
+
+    it "returns true if we get a NameError, most likely due to a missing #current_git_tag" do
+      task.stub paths_to_check: %w[path/to]
+      subject.stub(:changed_files_in_git).and_raise NameError
+
+      subject.trigger?(task).should be
+    end
   end
 end
